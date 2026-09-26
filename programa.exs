@@ -1,4 +1,4 @@
-def module Programa do
+defmodule Programa do
 
   @moduledoc """
   Módulo principal de ejecución del sistema.

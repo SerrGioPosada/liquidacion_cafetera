@@ -1,4 +1,4 @@
-def module Reportes do
+defmodule Reportes do
 @moduledoc """
   Módulo de generación de reportes
   """

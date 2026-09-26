@@ -1,4 +1,4 @@
-def module Liquidacion do
+defmodule Liquidacion do
 
   @moduledoc """
   Módulo de cálculo financiero y métricas de producción.
