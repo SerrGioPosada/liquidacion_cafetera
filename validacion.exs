@@ -14,13 +14,13 @@ defmodule Validacion do
   Valida un único pesaje evaluando secuencialmente sus atributos.
 
   ## Parámetros
-    - `pesaje`: Mapa del pesaje a validar (%{recolector: ..., lote: ..., dia: ..., kilos: ..., verdes: ...}).
-    - `recolectores`: Mapa indexado por código de recolector (`Util.registrar_recolectores/1`).
-    - `lotes`: Mapa indexado por id de lote (`Util.registrar_lotes/1`).
+    - pesaje: Mapa del pesaje a validar (%{recolector: ..., lote: ..., dia: ..., kilos: ..., verdes: ...}).
+    - recolectores: Mapa indexado por código de recolector (Util.registrar_recolectores/1).
+    - lotes: Mapa indexado por id de lote (Util.registrar_lotes/1).
 
   ## Retorno
-    - `{:ok, pesaje}` si pasa todas las reglas.
-    - `{:error, motivo}` si falla en alguna regla.
+    - {:ok, pesaje} si pasa todas las reglas.
+    - {:error, motivo} si falla en alguna regla.
   """
   def validar_pesaje(pesaje, recolectores, lotes) do
     with :ok <- validar_recolector(pesaje, recolectores),
@@ -38,12 +38,12 @@ defmodule Validacion do
   Clasifica una colección de pesajes en dos listas: válidos e inválidos.
 
   ## Parámetros
-    - `pesajes`: Lista de mapas de pesajes normalizados (`Util.registrar_pesajes/1`).
-    - `recolectores`: Mapa de recolectores procesado por `Util`.
-    - `lotes`: Mapa de lotes procesado por `Util`.
+    - pesajes: Lista de mapas de pesajes normalizados (Util.registrar_pesajes/1).
+    - recolectores: Mapa de recolectores procesado por Util.
+    - lotes: Mapa de lotes procesado por Util.
 
   ## Retorno
-    - `{:ok, validos, invalidos}` donde `validos` es una lista de pesajes y `invalidos` es una lista de tuplas `{%{pesaje}, :motivo}`.
+    - {:ok, validos, invalidos} donde validos es una lista de pesajes y invalidos es una lista de tuplas {%{pesaje}, :motivo}.
   """
   def clasificar_pesajes(pesajes, recolectores, lotes) when is_list(pesajes) do
     {validos, invalidos} =
@@ -64,7 +64,7 @@ defmodule Validacion do
 
 
 
-  # Valida si el código del recolector existe como clave en el mapa de recolectores (O(1))
+  # Valida si el código del recolector existe como clave en el mapa de recolectores
   defp validar_recolector(%{recolector: codigo}, recolectores) when is_map(recolectores) and not is_nil(codigo) do
     if Map.has_key?(recolectores, codigo) do
       :ok
@@ -75,7 +75,7 @@ defmodule Validacion do
 
   defp validar_recolector(_pesaje, _recolectores), do: {:error, :recolector_invalido}
 
-  # Valida si el id del lote existe como clave en el mapa de lotes (O(1))
+  # Valida si el id del lote existe como clave en el mapa de lotes (
   defp validar_lote(%{lote: id}, lotes) when is_map(lotes) and not is_nil(id) do
     if Map.has_key?(lotes, id) do
       :ok
