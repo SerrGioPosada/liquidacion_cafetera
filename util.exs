@@ -187,13 +187,7 @@ defmodule Util do
 
   defp normalizar_pesaje(mapa, _clave), do: normalizar_pesaje(mapa)
 
-  defmodule Util do
-  @moduledoc """
-  Módulo de utilidades e interacción de entrada por teclado.
-  Implementa lecturas mediante iteración de colecciones (Stream/Enum).
-  """
-
-  @doc """
+@doc """
   Lee una cadena de texto desde la consola eliminando saltos de línea.
   """
   def leer_string(mensaje) do
@@ -204,43 +198,41 @@ defmodule Util do
   end
 
   @doc """
-  Lee un entero de consola iterando sobre un flujo hasta obtener un valor válido.
+  Lee un entero de consola una sola vez. Retorna el número si es válido o un mensaje de error.
   """
   def leer_entero(mensaje) do
-    Stream.repeatedly(fn -> leer_string(mensaje) end)
-    |> Enum.find_value(fn entrada ->
-      case Integer.parse(entrada) do
-        {numero, ""} ->
-          numero
+    entrada = leer_string(mensaje)
 
-        _ ->
-          IO.puts(" Error: Debe ingresar un número entero válido.")
-          nil
-      end
-    end)
+    case Integer.parse(entrada) do
+      {numero, ""} ->
+        numero
+
+      _ ->
+        IO.puts(" Error: Debe ingresar un número entero válido.")
+        {:error, :entrada_invalida}
+    end
   end
 
   @doc """
-  Lee un número flotante de consola iterando sobre un flujo hasta obtener un valor válido.
+  Lee un número flotante de consola una sola vez. Retorna el número si es válido o un mensaje de error.
   """
   def leer_float(mensaje) do
-    Stream.repeatedly(fn -> leer_string(mensaje) end)
-    |> Enum.find_value(fn entrada ->
-      case Float.parse(entrada) do
-        {numero, ""} ->
-          numero
+    entrada = leer_string(mensaje)
 
-        _ ->
-          case Integer.parse(entrada) do
-            {numero, ""} ->
-              numero * 1.0
+    case Float.parse(entrada) do
+      {numero, ""} ->
+        numero
 
-            _ ->
-              IO.puts(" Error: Debe ingresar un valor numérico válido.")
-              nil
-          end
-      end
-    end)
+      _ ->
+        case Integer.parse(entrada) do
+          {numero, ""} ->
+            numero * 1.0
+
+          _ ->
+            IO.puts(" Error: Debe ingresar un valor numérico válido.")
+            {:error, :entrada_invalida}
+        end
+    end
   end
 
   @doc """
@@ -285,6 +277,4 @@ defmodule Util do
   end
 
   def formatear_moneda(_), do: "$0.00"
-end
-
 end
