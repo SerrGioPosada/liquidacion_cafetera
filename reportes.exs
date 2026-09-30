@@ -230,7 +230,7 @@ defmodule Reportes do
 
    end
 
-   def reporte_r7(recolectores, validos,tarifa_base) do
+  def reporte_r7(recolectores, validos,tarifa_base) do
 
    pesajes_por_recolector = Enum.group_by(validos,fn pesaje -> pesaje.recolector end)
 
@@ -276,5 +276,4 @@ defmodule Reportes do
 end
    
 
-end
 
