@@ -200,18 +200,18 @@ defmodule Util do
   @doc """
   Lee un entero de consola una sola vez. Retorna el número si es válido o un mensaje de error.
   """
-  def leer_entero(mensaje) do
-    entrada = leer_string(mensaje)
+def leer_entero(mensaje) do
+  mensaje
+  |> leer_string()
+  |> case do
+    {numero, ""} ->
+      numero
 
-    case Integer.parse(entrada) do
-      {numero, ""} ->
-        numero
-
-      _ ->
-        IO.puts(" Error: Debe ingresar un número entero válido.")
-        {:error, :entrada_invalida}
-    end
+    _ ->
+      IO.puts(" Error: Debe ingresar un número entero válido.")[cite: 1]
+      {:error, :entrada_invalida}
   end
+end
 
   @doc """
   Lee un número flotante de consola una sola vez. Retorna el número si es válido o un mensaje de error.
@@ -232,6 +232,57 @@ defmodule Util do
             IO.puts(" Error: Debe ingresar un valor numérico válido.")
             {:error, :entrada_invalida}
         end
+    end
+  end
+
+  @doc """
+  Muestra una lista de reportes en consola separándolos con pausas.
+  """
+  def mostrar_reportes(lista_reportes) when is_list(lista_reportes) do
+    Enum.each(lista_reportes, fn reporte ->
+      IO.puts(reporte)
+      pausar()
+    end)
+  end
+
+  @doc """
+  Solicita y captura los datos de un pesaje adicional desde la consola.
+  Retorna una tupla `{:ok, %{...}}` o `{:error, :formato_invalido}`.
+  """
+  def capturar_pesaje_manual do
+    IO.puts("--- REGISTRO DE PESAJE ADICIONAL ---")
+
+    cadena = leer_string("Ingrese pesaje (recolector;lote;dia;kilos;verdes) o ENTER para omitir:\n> ")
+
+    if cadena == "" do
+      {:ok, nil}
+    else
+      parsear_linea_pesaje(cadena)
+    end
+  end
+
+defp parsear_linea_pesaje(cadena) do
+  partes = String.split(cadena, ";") |> Enum.map(fn elemento -> String.trim(elemento) end)
+
+  case partes do
+    [rec, lote, dia_str, kilos_str, verdes_str] ->
+      with {dia, ""} <- Integer.parse(dia_str),
+           {kilos, ""} <- parse_float_or_int(kilos_str),
+           {verdes, ""} <- parse_float_or_int(verdes_str) do
+        {:ok, %{recolector: rec, lote: lote, dia: dia, kilos: kilos, verdes: verdes}}
+      else
+        _ -> {:error, :formato_invalido}
+      end
+
+    _ ->
+      {:error, :formato_invalido}
+  end
+end
+
+  defp parse_float_or_int(string) do
+    case Float.parse(string) do
+      {float_val, ""} -> {float_val, ""}
+      _ -> Integer.parse(string)
     end
   end
 
@@ -277,4 +328,7 @@ defmodule Util do
   end
 
   def formatear_moneda(_), do: "$0.00"
+
+
+
 end
