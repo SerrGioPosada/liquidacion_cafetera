@@ -62,59 +62,29 @@ defmodule Validacion do
 
   def clasificar_pesajes(_invalido, _recolectores, _lotes), do: {:ok, [], []}
 
+  #Validaciones
 
-
-  # Valida si el código del recolector existe como clave en el mapa de recolectores
+  # validar Recolector
   defp validar_recolector(%{recolector: codigo}, recolectores) when is_map(recolectores) and not is_nil(codigo) do
-    if Map.has_key?(recolectores, codigo) do
-      :ok
-    else
-      {:error, :recolector_desconocido}
-    end
+    if Map.has_key?(recolectores, codigo), do: :ok, else: {:error, :recolector_desconocido}
   end
+  defp validar_recolector(_pesaje, _recolectores), do: {:error, :recolector_desconocido}
 
-  defp validar_recolector(_pesaje, _recolectores), do: {:error, :recolector_invalido}
-
-  # Valida si el id del lote existe como clave en el mapa de lotes (
+  # validar Lote
   defp validar_lote(%{lote: id}, lotes) when is_map(lotes) and not is_nil(id) do
-    if Map.has_key?(lotes, id) do
-      :ok
-    else
-      {:error, :lote_desconocido}
-    end
+    if Map.has_key?(lotes, id), do: :ok, else: {:error, :lote_desconocido}
   end
+  defp validar_lote(_pesaje, _lotes), do: {:error, :lote_desconocido}
 
-  defp validar_lote(_pesaje, _lotes), do: {:error, :lote_invalido}
-
-  # Valida si el día está dentro del rango permitido (1..6)
-  defp validar_dia(%{dia: dia}) when is_integer(dia) do
-    if dia in @dias_cosecha do
-      :ok
-    else
-      {:error, :dia_invalido}
-    end
-  end
-
+  # validar Día
+  defp validar_dia(%{dia: dia}) when is_integer(dia) and dia in @dias_cosecha, do: :ok
   defp validar_dia(_pesaje), do: {:error, :dia_invalido}
 
-  # Valida si el valor de kilos es numérico, positivo y <= @maximo_kilos_pesaje
-  defp validar_kilos(%{kilos: kilos}) when is_number(kilos) and kilos > 0 and kilos <= @maximo_kilos_pesaje do
-    :ok
-  end
+  # validar Kilos
+  defp validar_kilos(%{kilos: kilos}) when is_number(kilos) and kilos > 0 and kilos <= @maximo_kilos_pesaje, do: :ok
+  defp validar_kilos(_pesaje), do: {:error, :kilos_fuera_de_rango}
 
-  defp validar_kilos(%{kilos: kilos}) when is_number(kilos), do: {:error, :kilos_fuera_de_rango}
-  defp validar_kilos(_pesaje), do: {:error, :kilos_invalido}
-
-  # Valida los kilos de verde con el total cosechado
-  defp validar_verdes(%{kilos: kilos, verdes: verdes}) when is_number(verdes) and is_number(kilos) and kilos > 0 do
-    porcentaje_verdes = (verdes * 100) / kilos
-
-    if porcentaje_verdes >= 0 and porcentaje_verdes <= 100 and verdes <= kilos do
-      :ok
-    else
-      {:error, :porcentaje_invalido}
-    end
-  end
-
-  defp validar_verdes(_pesaje), do: {:error, :verdes_invalido}
+  # validar Verdes
+  defp validar_verdes(%{verdes: verdes}) when is_number(verdes) and verdes >= 0 and verdes <= 100, do: :ok
+  defp validar_verdes(_pesaje), do: {:error, :porcentaje_invalido}
 end
