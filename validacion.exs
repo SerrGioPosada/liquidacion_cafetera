@@ -1,9 +1,14 @@
+## Integrantes del Grupo
+# Sergio Posada Garcia
+# Jhonatan Perilla Betancur
+# Sara Benjumea Gallego
+
 defmodule Validacion do
   @moduledoc """
   Módulo encargado de la verificación de reglas de negocio para los pesajes de café.
 
   Asegura que cada registro de pesaje cumpla con la existencia del recolector y lote
-  (mediante búsquedas en tiempo constante O(1)), rangos de fechas (días 1 al 6),
+  rangos de fechas (días 1 al 6),
   kilos válidos y porcentaje de café verde dentro de los límites.
   """
 

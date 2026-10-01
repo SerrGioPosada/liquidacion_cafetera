@@ -1,3 +1,8 @@
+## Integrantes del Grupo
+# Sergio Posada Garcia
+# Jhonatan Perilla Betancur
+# Sara Benjumea Gallego
+
 defmodule Liquidacion do
   @moduledoc """
   Módulo encargado de calcular los pagos de los recolectores

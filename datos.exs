@@ -1,3 +1,8 @@
+## Integrantes del Grupo
+# Sergio Posada Garcia
+# Jhonatan Perilla Betancur
+# Sara Benjumea Gallego
+
 defmodule Datos do
 @moduledoc """
   Módulo encargado exclusivamente de proveer la información base de la finca.

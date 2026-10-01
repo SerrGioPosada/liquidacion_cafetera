@@ -1,3 +1,8 @@
+## Integrantes del Grupo
+# Sergio Posada Garcia
+# Jhonatan Perilla Betancur
+# Sara Benjumea Gallego
+
 defmodule Reportes do
 @moduledoc """
   Módulo de generación de reportes
