@@ -1,8 +1,16 @@
 defmodule Reportes do
 @moduledoc """
   Módulo de generación de reportes
+
+  incluyendo los pesajes validos, invalidos y los lotes y recolectores
   
   """
+
+  @doc """
+  genera los reportes de pesajes invalidos y muestra la cantidad 
+  de veces que se muetra cada invalidacion  
+  """
+
   def reporte_r1(invalidos) do
   motivos =
     invalidos
@@ -12,6 +20,11 @@ defmodule Reportes do
   {invalidos, motivos}
   end
 
+  @doc"""
+  agrupa todos los pesajes valido por cada lote, segun las hectareas del lote,
+  calcula los kilos recolecados y el rendimiento
+  """
+
   def reporte_r2(validos,lotes) do
 
   #pesajes agrupados por lote en un mapa
@@ -19,6 +32,7 @@ defmodule Reportes do
   pesajes_por_lote = Enum.group_by(validos, fn pesaje -> pesaje.lote end)
 
   lotes
+  |>Map.values()
   |>Enum.map(fn lote -> procesar_lote(lote,pesajes_por_lote) end)
   |>Enum.sort_by(fn {_id, _nombre,_kilos,rendimiento} -> rendimiento end, :desc)
 
@@ -35,14 +49,18 @@ defmodule Reportes do
   
   end
 
-  defp calcular_rendimiento(_kilos,hectareas) when hectareas == 0 or hectareas == 0.0 do
-
+  defp calcular_rendimiento(_kilos,hectareas) when hectareas == 0 do
   0.0
   end
 
   defp calcular_rendimiento(kilos,hectareas) do
     kilos/hectareas 
   end
+
+  @doc """
+  en el rango de los seis dias, se muestra si se cumplio la meta diaria junto
+  con la indicacion sobre si se cumplio o no almenos un dia
+  """
 
   def reporte_r3(validos, meta_diaria) do
     # 1. se agrupan los mensajes por dia
@@ -69,47 +87,20 @@ defmodule Reportes do
     {dia, kilos, cumplio}
   end
 
+  @do"""
+  se genera la liquidacion de todos los recolectores, se ordena dependiendo del valor recibido
+  """
 
 
-  def liquidar_recolector(recolector, pesajes, tarifa_base) do
-   kilos =
-     Enum.reduce(pesajes, 0.0, fn pesaje, acumulador ->
-      acumulador + pesaje.kilos
-     end)
-
-   total_pesajes =
-    Enum.reduce(pesajes, 0.0, fn pesaje, acumulador ->
-      acumulador + valor_pesaje(pesaje, tarifa_base)
-    end)
-
-   bonificaciones = bonificacion(pesajes)
-   alimentacion = descuento_alimentacion(pesajes)
-
-   neto = total_pesajes + bonificaciones - alimentacion
-
-   %{
-    recolector: recolector.codigo,
-    nombre: recolector.nombre,
-    kilos: kilos,
-    pesajes: total_pesajes,
-    bonificaciones: bonificaciones,
-    alimentacion: alimentacion,
-    neto: neto
-   }
-  end
-
-  def reporte_r4(recolectores, validos, tarifa_base) do
-   pesajes_por_recolector =
-    Enum.group_by(validos, fn pesaje ->
-      pesaje.recolector
-    end)
+  def reporte_r4(recolectores, validos) do
+   pesajes_por_recolector = Enum.group_by(validos, fn pesaje -> pesaje.recolector end)
 
    recolectores
-   |> Enum.map(fn recolector ->
-    pesajes = Map.get(pesajes_por_recolector, recolector.codigo, [])
+   |> Map.values()
+   |> Enum.map(fn recolector -> pesajes = Map.get(pesajes_por_recolector, recolector.codigo, [])
 
-   liquidar_recolector(recolector, pesajes, tarifa_base)
-   end)
+   Liquidacion.liquidar_recolector(recolector, pesajes)end)
+
    |> Enum.sort_by(fn liquidacion -> liquidacion.neto end, :desc)
    |> Enum.with_index(1)
    end
@@ -120,10 +111,17 @@ defmodule Reportes do
    end
 
 
-   def reporte_r5(validos, recolectores) do
-     mejores_por_dia =
-      Enum.map(1..6, fn dia ->
-       mejor_del_dia(dia, validos, recolectores)
+  @doc """
+   se muestra el reporte del mejor recolector de cada dia
+
+   tambien se muestra si el recolector fue el mejor durante mas dias
+  """
+
+    def reporte_r5(validos, recolectores) do
+
+      mejores_por_dia =
+
+      Enum.map(1..6, fn dia -> mejor_del_dia(dia, validos, recolectores)
         end)
 
       ganadores = Enum.reduce(mejores_por_dia, [], fn resultado, acumulador -> agregar_ganadores(resultado,acumulador) end)
@@ -138,9 +136,13 @@ defmodule Reportes do
 
     end
 
+    #si no habian pesajes valido en el dia, no se agregara ningun ganador
+
     defp agregar_ganadores({_dia, :sin_pesajes_validos}, acumulador) do
       acumulador
     end
+
+    #se agregan todos los ganadores que empataron entre si
 
     defp agregar_ganadores({_dia,mejores}, acumulador) do
       
@@ -167,6 +169,7 @@ defmodule Reportes do
        end
     end
 
+
   defp kilos_por_recolector(dia, validos, recolectores) do
    pesajes_por_recolector = validos
     |> Enum.filter(fn pesaje -> pesaje.dia == dia end)
@@ -183,14 +186,13 @@ defmodule Reportes do
     end)
   end
 
-  defp pesajes_por_recolector(validos) do
-    Enum.group_by(validos, fn pesaje -> pesaje.recolector end)
 
-  end
+  @doc """
+  determina el recolector con mejor calidad entre los que tienen
+  almenos tres pesajes validos
 
-  defp filtrar_recolectores(pesajes_por_recolector) do
-    Enum.filter(pesajes_por_recolector, fn {_codigo,pesajes} -> lenght(pesajes) >=3 end)
-  end
+  la calidad se determina por el porcentaje de cafe verde ponderado por los kilos recolectados
+  """
 
   def reporte_r6(validos) do
 
@@ -230,23 +232,44 @@ defmodule Reportes do
 
    end
 
-  def reporte_r7(recolectores, validos,tarifa_base) do
+   @doc """
+  se calcula el total pagado a los recolectores y el costo promedio pagado por cada kilo valido
+
+   """
+
+  def reporte_r7(recolectores, validos) do
 
    pesajes_por_recolector = Enum.group_by(validos,fn pesaje -> pesaje.recolector end)
 
-   liquidaciones = Enum.map(recolectores, fn recolector -> pesajes = Map.get(pesajes_por_recolector, recolector.codigo, [])
+   liquidaciones =
+
+    recolectores
+
+    |>Map.values()
+    |>Enum.map( fn recolector -> pesajes = Map.get(pesajes_por_recolector, recolector.codigo, [])
    
-    liquidar_recolector(recolector,pesajes,tarifa_base)end)
+   Liquidacion.liquidar_recolector(recolector,pesajes)end)
 
    total_pagado = Enum.reduce(liquidaciones, 0.0, fn liquidacion, acumulador -> acumulador + liquidacion.neto end)
 
    kilos_validos = Enum.reduce(liquidaciones, 0.0, fn liquidacion, acumulador -> acumulador + liquidacion.kilos end)
 
-   costo_promedio = total_pagado / kilos_validos
+   costo_promedio = 
+    if kilos_validos == 0 do
+      0.0
+    else
+      total_pagado / kilos_validos
+    end
 
    {total_pagado, costo_promedio}
 
    end
+
+   @doc """
+  señala los recolectores que trabajaron en cada lote
+
+  si ningun recolector cumple con la condicion, muestra un mensaje diciendo que no existe ninguno
+   """
 
   def reporte_r8(recolectores, validos, lotes) do
 
@@ -257,10 +280,13 @@ defmodule Reportes do
 
    recolectores_todos_lotes =
     recolectores
+    |>Map.values()
     |> Enum.filter(fn recolector ->
       pesajes = Map.get(pesajes_por_recolector, recolector.codigo, [])
 
-      Enum.all?(lotes, fn lote ->
+     lotes
+     |>Map.values()
+     |>Enum.all?(fn lote ->
         Enum.any?(pesajes, fn pesaje ->
           pesaje.lote == lote.id
         end)
