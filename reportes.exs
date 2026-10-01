@@ -233,7 +233,7 @@ defmodule Reportes do
    end
 
    @doc """
-  se calcula el total pagado a los recolectores y el costo promedio pagado por cada kilo valido
+    se calcula el total pagado a los recolectores y el costo promedio pagado por cada kilo valido
 
    """
 
@@ -266,9 +266,9 @@ defmodule Reportes do
    end
 
    @doc """
-  señala los recolectores que trabajaron en cada lote
+   señala los recolectores que trabajaron en cada lote
 
-  si ningun recolector cumple con la condicion, muestra un mensaje diciendo que no existe ninguno
+    si ningun recolector cumple con la condicion, muestra un mensaje diciendo que no existe ninguno
    """
 
   def reporte_r8(recolectores, validos, lotes) do

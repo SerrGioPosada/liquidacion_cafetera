@@ -240,7 +240,7 @@ end
   """
   def mostrar_reportes(lista_reportes) when is_list(lista_reportes) do
     Enum.each(lista_reportes, fn reporte ->
-      IO.puts(reporte)
+      IO.puts(inspect(reporte, pretty: true))
       pausar()
     end)
   end
