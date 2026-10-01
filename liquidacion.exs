@@ -10,10 +10,10 @@ defmodule Liquidacion do
   @descuento_alimentacion 12000
 
   # 1. VALOR DE UN PESAJE
-
   @doc """
-  Calcula el valor de un pesaje según sus kilos
-  y el porcentaje de café verde.
+  Calcula el valor de un pesaje según los kilos recolectados
+  y el porcentaje de café verde registrado.
+  Aplica un factor de ajuste según el porcentaje de granos verdes.
   """
   def valor_pesaje(pesaje) do
     kilos = pesaje.kilos
@@ -119,8 +119,9 @@ defmodule Liquidacion do
   # 5. LIQUIDACIÓN DE TODOS LOS RECOLECTORES
 
   @doc """
-  Genera una lista con la liquidación de todos los
-  recolectores, incluso si no tienen pesajes válidos.
+  Calcula la liquidación de todos los recolectores.
+  Recibe los recolectores como una lista o un mapa
+  y devuelve una lista con el resultado de cada liquidación.
   """
   def liquidar(recolectores, pesajes_validos) do
     recolectores_lista =
