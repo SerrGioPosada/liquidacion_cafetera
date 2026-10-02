@@ -4,7 +4,7 @@
 # Sara Benjumea Gallego
 
 defmodule Datos do
-@moduledoc """
+  @moduledoc """
   Módulo encargado exclusivamente de proveer la información base de la finca.
   Contiene las listas de recolectores, lotes y pesajes registrados.
   """
@@ -43,7 +43,7 @@ defmodule Datos do
 
   @doc """
   Devuelve la lista de pesajes registrados por el mayordomo.
-  Contiene pesajes válidos distribuidos en los 6 días y al menos 2
+  Contiene 80 pesajes válidos distribuidos en los 6 días y al menos 2
   pesajes inválidos por cada motivo de rechazo.
   """
   def pesajes do
@@ -71,6 +71,7 @@ defmodule Datos do
       %{recolector: "R03", lote: "L1", dia: 2, kilos: 85.0, verdes: 2.5},
       %{recolector: "R03", lote: "L2", dia: 2, kilos: 50.0, verdes: 3.0},
       %{recolector: "R04", lote: "L3", dia: 2, kilos: 70.0, verdes: 2.0},
+      %{recolector: "R04", lote: "L4", dia: 2, kilos: 55.0, verdes: 3.0},
       %{recolector: "R05", lote: "L2", dia: 2, kilos: 80.0, verdes: 6.0},
       %{recolector: "R05", lote: "L3", dia: 2, kilos: 45.0, verdes: 1.5},
       %{recolector: "R06", lote: "L4", dia: 2, kilos: 100.0, verdes: 4.0},
@@ -105,6 +106,7 @@ defmodule Datos do
       %{recolector: "R06", lote: "L4", dia: 4, kilos: 85.0, verdes: 1.8},
       %{recolector: "R07", lote: "L2", dia: 4, kilos: 95.0, verdes: 3.5},
       %{recolector: "R08", lote: "L1", dia: 4, kilos: 70.0, verdes: 4.0},
+      %{recolector: "R09", lote: "L1", dia: 4, kilos: 75.0, verdes: 1.2},
       %{recolector: "R09", lote: "L3", dia: 4, kilos: 100.0, verdes: 2.2},
       %{recolector: "R10", lote: "L4", dia: 4, kilos: 80.0, verdes: 7.5},
 
@@ -132,9 +134,11 @@ defmodule Datos do
       %{recolector: "R05", lote: "L4", dia: 6, kilos: 75.0, verdes: 3.0},
       %{recolector: "R06", lote: "L3", dia: 6, kilos: 115.0, verdes: 2.2},
       %{recolector: "R07", lote: "L1", dia: 6, kilos: 85.0, verdes: 1.9},
+      %{recolector: "R08", lote: "L3", dia: 6, kilos: 70.0, verdes: 2.8},
       %{recolector: "R08", lote: "L4", dia: 6, kilos: 90.0, verdes: 4.8},
       %{recolector: "R09", lote: "L2", dia: 6, kilos: 105.0, verdes: 2.0},
       %{recolector: "R10", lote: "L1", dia: 6, kilos: 70.0, verdes: 8.5},
+      %{recolector: "R10", lote: "L2", dia: 6, kilos: 60.0, verdes: 6.5},
 
       # --- PESAJE INVÁLIDOS (Al menos 2 por cada motivo de rechazo) ---
 
