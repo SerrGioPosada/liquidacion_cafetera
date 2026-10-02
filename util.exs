@@ -282,14 +282,16 @@ defmodule Util do
     end)
   end
 
-  # R2, R4, R8: Listas estructuradas
+# R2, R4, R8: Listas estructuradas
   defp imprimir_reporte_formateado(items) when is_list(items) do
     Enum.each(items, fn
       {id, nombre, kilos, rendimiento} ->
-        IO.puts("Lote: [#{id}] #{nombre} | Kilos: #{Float.round(kilos * 1.0, 2)} kg | Rendimiento: #{Float.round(rendimiento * 1.0, 2)} kg/ha")
+        IO.puts("Lote: [#{id}] #{nombre} | Kilos: #{redondear(kilos)} kg | Rendimiento: #{redondear(rendimiento)} kg/ha")
 
       {liq, posicion} when is_map(liq) ->
-        IO.puts("#{posicion}. [#{liq.codigo}] #{liq.nombre} | Kilos: #{Float.round(liq.kilos * 1.0, 2)} kg | Neto: $#{Float.round(liq.neto * 1.0, 2)}")
+        neto_val = Map.get(liq, :neto, 0.0)
+        kilos_val = Map.get(liq, :kilos, 0.0)
+        IO.puts("#{posicion}. [#{liq.codigo}] #{liq.nombre} | Kilos: #{redondear(kilos_val)} kg | Neto: #{formatear_moneda(neto_val)}")
 
       %{codigo: codigo, nombre: nombre} ->
         IO.puts("  - [#{codigo}] #{nombre}")
@@ -308,7 +310,34 @@ defmodule Util do
     IO.inspect(otro, pretty: true)
   end
 
+@doc """
+  Muestra el desprendible de pago de un recolector adaptado a la estructura de Liquidacion.
+  """
+  def mostrar_desprendible(liq) when is_map(liq) do
+    # Obtenemos los valores de forma segura con respaldo
+    bruto = Map.get(liq, :suma_pesajes, Map.get(liq, :bruto, 0.0))
+    descuento = Map.get(liq, :alimentacion, Map.get(liq, :descuento, 0.0))
+    bonificacion = Map.get(liq, :bonificaciones, 0.0)
+    neto = Map.get(liq, :neto, 0.0)
+    kilos = Map.get(liq, :kilos, 0.0)
+    dias = Map.get(liq, :dias, 0)
+
+    mostrar_titulo("DESPRENDIBLE DE PAGO")
+    imprimir("Codigo: #{liq.codigo}")
+    imprimir("Nombre: #{liq.nombre}")
+    imprimir("Dias laborados: #{dias}")
+    imprimir("Kilos validos: #{redondear(kilos)} kg")
+    mostrar_divisor()
+    imprimir("Pago Bruto (Pesajes): #{formatear_moneda(bruto)}")
+    imprimir("Bonificaciones: +#{formatear_moneda(bonificacion)}")
+    imprimir("Descuento Alimentacion: -#{formatear_moneda(descuento)}")
+    mostrar_divisor()
+    imprimir("TOTAL NETO: #{formatear_moneda(neto)}")
+    mostrar_divisor()
+  end
+
   @doc """
+
   Solicita y captura los datos de un pesaje adicional desde la consola.
   Muestra el formato de solicitud exactamente como pide el Anexo.
   """

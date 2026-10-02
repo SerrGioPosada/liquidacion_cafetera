@@ -9,7 +9,7 @@ defmodule Programa do
   def main do
     Util.mostrar_titulo("SISTEMA DE LIQUIDACION DE COSECHA DE CAFE")
 
-    #Cargar datos
+    # Cargar datos
     recolectores_lista = Datos.recolectores()
     lotes_lista = Datos.lotes()
 
@@ -17,10 +17,10 @@ defmodule Programa do
     lotes_mapa = Util.registrar_lotes(lotes_lista)
     pesajes_lista = Util.registrar_pesajes(Datos.pesajes())
 
-    #Validar
+    # Validar
     {:ok, validos, invalidos} = Validacion.clasificar_pesajes(pesajes_lista, recolectores_mapa, lotes_mapa)
 
-    # Pesaje manual
+    #  Pesaje manual
     {validos, invalidos} = procesar_pesaje_manual(validos, invalidos, recolectores_mapa, lotes_mapa)
 
     # Generar y mostrar reportes R1 - R8
@@ -67,7 +67,7 @@ defmodule Programa do
     codigo_raw = Util.leer_string("Ingrese el codigo del recolector para ver su desprendible (o Enter para omitir): ")
 
     if codigo_raw == "" do
-      Util.imprimir("No se ingreso ningún código. Finalizando programa.")
+      Util.imprimir("No se selecciono ningun recolector. Finalizando programa.")
     else
       codigo = String.upcase(codigo_raw)
 
@@ -76,8 +76,14 @@ defmodule Programa do
           Util.imprimir("No existe un recolector con el codigo #{codigo_raw}.")
 
         recolector ->
-          desprendible_texto = Liquidacion.generar_desprendible(recolector, validos)
-          Util.imprimir("\n" <> to_string(desprendible_texto))
+          # Pesajes filtrados del recolector seleccionado
+          pesajes_recolector = Enum.filter(validos, fn p -> p.recolector == recolector.codigo end)
+
+          # Liquidación utilizando la función existente
+          liq = Liquidacion.liquidar_recolector(recolector, pesajes_recolector)
+
+          # Muestra el desprendible formateado desde Util
+          Util.mostrar_desprendible(liq)
       end
     end
   end
