@@ -17,13 +17,13 @@ defmodule Programa do
     lotes_mapa = Util.registrar_lotes(lotes_lista)
     pesajes_lista = Util.registrar_pesajes(Datos.pesajes())
 
-    # Validar
+    # Validar pesajes
     {:ok, validos, invalidos} = Validacion.clasificar_pesajes(pesajes_lista, recolectores_mapa, lotes_mapa)
 
-    #  Pesaje manual
+    #  Capturar pesaje manual opcional
     {validos, invalidos} = procesar_pesaje_manual(validos, invalidos, recolectores_mapa, lotes_mapa)
 
-    # Generar y mostrar reportes R1 - R8
+    # Generar y mostrar reportes estándar R1 - R8
     [
       Reportes.reporte_r1(invalidos),
       Reportes.reporte_r2(validos, lotes_mapa),
@@ -36,7 +36,10 @@ defmodule Programa do
     ]
     |> Util.mostrar_reportes()
 
-    # Solicitar desprendible
+    # Renkings
+    demostrar_rankings_parametrizados(recolectores_mapa, validos)
+
+    # Solicitar e imprimir desprendible individual
     solicitar_desprendible(recolectores_mapa, validos)
   end
 
@@ -63,6 +66,30 @@ defmodule Programa do
     end
   end
 
+  defp demostrar_rankings_parametrizados(recolectores_mapa, validos) do
+    liquidaciones =
+      recolectores_mapa
+      |> Map.values()
+      |> Enum.map(fn recolector ->
+        pesajes = Enum.filter(validos, fn p -> p.recolector == recolector.codigo end)
+        Liquidacion.liquidar_recolector(recolector, pesajes)
+      end)
+
+    Util.mostrar_titulo("RANKINGS ")
+
+    Util.imprimir("\n--- 1. Ranking por defecto: --")[cite: 1]
+    Reportes.ranking(liquidaciones, []) |> Util.imprimir_reporte_formateado()[cite: 1]
+    Util.pausar()
+
+    Util.imprimir("\n--- 2. Ranking Top 3 por Kilos:  ---")[cite: 1]
+    Reportes.ranking(liquidaciones, campo: :kilos, limite: 3) |> Util.imprimir_reporte_formateado()[cite: 1]
+    Util.pausar()
+
+    Util.imprimir("\n--- 3. Ranking por Bruto Ascendente---")[cite: 1]
+    Reportes.ranking(liquidaciones, orden: :asc, campo: :suma_pesajes) |> Util.imprimir_reporte_formateado()[cite: 1]
+    Util.pausar()
+  end
+
   defp solicitar_desprendible(recolectores_mapa, validos) do
     codigo_raw = Util.leer_string("Ingrese el codigo del recolector para ver su desprendible (o Enter para omitir): ")
 
@@ -76,13 +103,8 @@ defmodule Programa do
           Util.imprimir("No existe un recolector con el codigo #{codigo_raw}.")
 
         recolector ->
-          # Pesajes filtrados del recolector seleccionado
           pesajes_recolector = Enum.filter(validos, fn p -> p.recolector == recolector.codigo end)
-
-          # Liquidación utilizando la función existente
           liq = Liquidacion.liquidar_recolector(recolector, pesajes_recolector)
-
-          # Muestra el desprendible formateado desde Util
           Util.mostrar_desprendible(liq)
       end
     end

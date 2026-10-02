@@ -288,10 +288,22 @@ defmodule Util do
       {id, nombre, kilos, rendimiento} ->
         IO.puts("Lote: [#{id}] #{nombre} | Kilos: #{redondear(kilos)} kg | Rendimiento: #{redondear(rendimiento)} kg/ha")
 
+      # AQUI ESTA EL CAMBIO PARA R4 Y RANKING
       {liq, posicion} when is_map(liq) ->
-        neto_val = Map.get(liq, :neto, 0.0)
-        kilos_val = Map.get(liq, :kilos, 0.0)
-        IO.puts("#{posicion}. [#{liq.codigo}] #{liq.nombre} | Kilos: #{redondear(kilos_val)} kg | Neto: #{formatear_moneda(neto_val)}")
+        bruto = Map.get(liq, :suma_pesajes, Map.get(liq, :bruto, 0.0))
+        bonif = Map.get(liq, :bonificaciones, 0.0)
+        alim = Map.get(liq, :alimentacion, Map.get(liq, :descuento, 0.0))
+        neto = Map.get(liq, :neto, 0.0)
+        kilos = Map.get(liq, :kilos, 0.0)
+
+        IO.puts(
+          "#{posicion}. [#{liq.codigo}] #{liq.nombre} | " <>
+          "Kilos: #{redondear(kilos)} kg | " <>
+          "Bruto: #{formatear_moneda(bruto)} | " <>
+          "Bonif: +#{formatear_moneda(bonif)} | " <>
+          "Alim: -#{formatear_moneda(alim)} | " <>
+          "Neto: #{formatear_moneda(neto)}"
+        )
 
       %{codigo: codigo, nombre: nombre} ->
         IO.puts("  - [#{codigo}] #{nombre}")
@@ -305,6 +317,30 @@ defmodule Util do
   defp imprimir_reporte_formateado(texto) when is_binary(texto) do
     IO.puts(texto)
   end
+
+  @doc """
+Genera un ranking dinmico de liquidaciones usando Keyword Lists para las opciones.
+Opciones soportadas:
+  - campo
+  - orden
+  - limite
+"""
+def ranking(liquidaciones, opciones \\ []) do
+  campo = Keyword.get(opciones, :campo, :neto)
+  orden = Keyword.get(opciones, :orden, :desc)
+  limite = Keyword.get(opciones, :limite, nil)
+
+  resultado =
+    liquidaciones
+    |> Enum.sort_by(fn liq -> Map.get(liq, campo, 0.0) end, orden)
+    |> Enum.with_index(1)
+
+  if is_integer(limite) and limite > 0 do
+    Enum.take(resultado, limite)
+  else
+    resultado
+  end
+end
 
   defp imprimir_reporte_formateado(otro) do
     IO.inspect(otro, pretty: true)
