@@ -4,8 +4,15 @@
 # Sara Benjumea Gallego
 
 defmodule Programa do
-  @meta_diaria 300.0
+  @moduledoc """
+  Modulo principal del programa de liquidacion de cosecha de cafe.
+  """
 
+  @meta_diaria 400.0
+
+  @doc """
+  Punto de entrada principal de la aplicacion.
+  """
   def main do
     Util.mostrar_titulo("SISTEMA DE LIQUIDACION DE COSECHA DE CAFE")
 
@@ -20,7 +27,7 @@ defmodule Programa do
     # Validar pesajes
     {:ok, validos, invalidos} = Validacion.clasificar_pesajes(pesajes_lista, recolectores_mapa, lotes_mapa)
 
-    #  Capturar pesaje manual opcional
+    # Capturar pesaje manual opcional
     {validos, invalidos} = procesar_pesaje_manual(validos, invalidos, recolectores_mapa, lotes_mapa)
 
     # Generar y mostrar reportes estándar R1 - R8
@@ -36,8 +43,22 @@ defmodule Programa do
     ]
     |> Util.mostrar_reportes()
 
-    # Renkings
-    demostrar_rankings_parametrizados(recolectores_mapa, validos)
+    # Demostrar rankings parametrizados usando Liquidacion.liquidar
+    liquidaciones = Liquidacion.liquidar(recolectores_mapa, validos)
+
+    Util.mostrar_titulo("RANKINGS")
+
+    Util.imprimir("\n--- 1. Ranking por defecto: ---")
+    Reportes.ranking(liquidaciones, []) |> Util.imprimir_reporte_formateado()
+    Util.pausar()
+
+    Util.imprimir("\n--- 2. Ranking Top 3 por Kilos: ---")
+    Reportes.ranking(liquidaciones, campo: :kilos, limite: 3) |> Util.imprimir_reporte_formateado()
+    Util.pausar()
+
+    Util.imprimir("\n--- 3. Ranking por Bruto Ascendente: ---")
+    Reportes.ranking(liquidaciones, orden: :asc, campo: :suma_pesajes) |> Util.imprimir_reporte_formateado()
+    Util.pausar()
 
     # Solicitar e imprimir desprendible individual
     solicitar_desprendible(recolectores_mapa, validos)
@@ -52,7 +73,8 @@ defmodule Programa do
       {:ok, pesaje} ->
         case Validacion.validar_pesaje(pesaje, recolectores_mapa, lotes_mapa) do
           {:ok, pesaje_valido} ->
-            Util.imprimir("Pesaje agregado con exito.\n")
+            p = pesaje_valido
+            Util.imprimir("Pesaje agregado: #{p.recolector} en #{p.lote}, día #{p.dia}, #{p.kilos} kg, #{p.verdes}% de verdes.\n")
             {[pesaje_valido | validos], invalidos}
 
           {:error, motivo} ->
@@ -66,32 +88,8 @@ defmodule Programa do
     end
   end
 
-  defp demostrar_rankings_parametrizados(recolectores_mapa, validos) do
-    liquidaciones =
-      recolectores_mapa
-      |> Map.values()
-      |> Enum.map(fn recolector ->
-        pesajes = Enum.filter(validos, fn p -> p.recolector == recolector.codigo end)
-        Liquidacion.liquidar_recolector(recolector, pesajes)
-      end)
-
-    Util.mostrar_titulo("RANKINGS ")
-
-    Util.imprimir("\n--- 1. Ranking por defecto: --")[cite: 1]
-    Reportes.ranking(liquidaciones, []) |> Util.imprimir_reporte_formateado()[cite: 1]
-    Util.pausar()
-
-    Util.imprimir("\n--- 2. Ranking Top 3 por Kilos:  ---")[cite: 1]
-    Reportes.ranking(liquidaciones, campo: :kilos, limite: 3) |> Util.imprimir_reporte_formateado()[cite: 1]
-    Util.pausar()
-
-    Util.imprimir("\n--- 3. Ranking por Bruto Ascendente---")[cite: 1]
-    Reportes.ranking(liquidaciones, orden: :asc, campo: :suma_pesajes) |> Util.imprimir_reporte_formateado()[cite: 1]
-    Util.pausar()
-  end
-
   defp solicitar_desprendible(recolectores_mapa, validos) do
-    codigo_raw = Util.leer_string("Ingrese el codigo del recolector para ver su desprendible (o Enter para omitir): ")
+    codigo_raw = Util.leer_string("Ingrese el código del recolector para ver su desprendible (o Enter para omitir): ")
 
     if codigo_raw == "" do
       Util.imprimir("No se selecciono ningun recolector. Finalizando programa.")
@@ -100,12 +98,10 @@ defmodule Programa do
 
       case Map.get(recolectores_mapa, codigo) || Map.get(recolectores_mapa, codigo_raw) do
         nil ->
-          Util.imprimir("No existe un recolector con el codigo #{codigo_raw}.")
+          Util.imprimir("No existe un recolector con el código #{codigo_raw}.")
 
         recolector ->
-          pesajes_recolector = Enum.filter(validos, fn p -> p.recolector == recolector.codigo end)
-          liq = Liquidacion.liquidar_recolector(recolector, pesajes_recolector)
-          Util.mostrar_desprendible(liq)
+          Util.mostrar_desprendible(Liquidacion.liquidar_recolector(recolector, validos))
       end
     end
   end

@@ -230,10 +230,10 @@ defmodule Util do
     end)
   end
 
-  # Auxiliares para formatear los retornos de Reportes R1 - R8
+  # Auxiliares públicos para formatear retornos de Reportes y Rankings
 
   # R1: Tupla {invalidos, motivos_mapa}
-  defp imprimir_reporte_formateado({invalidos, motivos}) when is_map(motivos) do
+  def imprimir_reporte_formateado({invalidos, motivos}) when is_map(motivos) do
     IO.puts("Total de pesajes rechazados: #{length(invalidos)}")
     IO.puts("Desglose por motivo:")
     Enum.each(motivos, fn {motivo, cantidad} ->
@@ -242,22 +242,22 @@ defmodule Util do
   end
 
   # R6: Tupla {codigo_string, porcentaje_numero}
-  defp imprimir_reporte_formateado({codigo, porcentaje}) when is_binary(codigo) and is_number(porcentaje) do
+  def imprimir_reporte_formateado({codigo, porcentaje}) when is_binary(codigo) and is_number(porcentaje) do
     IO.puts("Recolector con mejor calidad: #{codigo}")
     IO.puts("Porcentaje ponderado de verde: #{Float.round(porcentaje * 1.0, 2)}%")
   end
 
   # R7: Tupla {total_pagado_numero, costo_promedio_numero}
-  defp imprimir_reporte_formateado({total_pagado, costo_promedio}) when is_number(total_pagado) and is_number(costo_promedio) do
-    IO.puts("Total pagado: $#{Float.round(total_pagado * 1.0, 2)}")
-    IO.puts("Costo promedio por kilo valido: $#{Float.round(costo_promedio * 1.0, 2)}")
+  def imprimir_reporte_formateado({total_pagado, costo_promedio}) when is_number(total_pagado) and is_number(costo_promedio) do
+    IO.puts("Total pagado: #{formatear_moneda(total_pagado)}")
+    IO.puts("Costo promedio por kilo valido: #{formatear_moneda(costo_promedio)}")
   end
 
   # R3: Tupla {reportes_dias, todos_boolean, alguno_boolean}
-  defp imprimir_reporte_formateado({reportes_dias, todos, alguno}) when is_list(reportes_dias) do
+  def imprimir_reporte_formateado({reportes_dias, todos, alguno}) when is_list(reportes_dias) do
     Enum.each(reportes_dias, fn {dia, kilos, cumplio} ->
       estado = if cumplio, do: "CUMPLIO META", else: "NO CUMPLIO META"
-      IO.puts("Dia #{dia}: #{Float.round(kilos * 1.0, 2)} kg -> #{estado}")
+      IO.puts("Dia #{dia}: #{redondear(kilos)} kg -> #{estado}")
     end)
     IO.puts("\nEvaluacion general:")
     IO.puts("  - ¿Cumplio todos los dias?: #{if todos, do: "SI", else: "NO"}")
@@ -265,14 +265,14 @@ defmodule Util do
   end
 
   # R5: Tupla {mejores_por_dia_lista, mejores_totales}
-  defp imprimir_reporte_formateado({mejores_por_dia, mejores_totales}) when is_list(mejores_por_dia) do
+  def imprimir_reporte_formateado({mejores_por_dia, mejores_totales}) when is_list(mejores_por_dia) do
     IO.puts("--- Ganadores por dia ---")
     Enum.each(mejores_por_dia, fn
       {dia, :sin_pesajes_validos} ->
         IO.puts("Dia #{dia}: Sin pesajes validos")
 
       {dia, ganadores} ->
-        lista_ganadores = Enum.map_join(ganadores, ", ", fn {cod, k} -> "#{cod} (#{Float.round(k * 1.0, 2)} kg)" end)
+        lista_ganadores = Enum.map_join(ganadores, ", ", fn {cod, k} -> "#{cod} (#{redondear(k)} kg)" end)
         IO.puts("Dia #{dia}: #{lista_ganadores}")
     end)
 
@@ -282,13 +282,12 @@ defmodule Util do
     end)
   end
 
-# R2, R4, R8: Listas estructuradas
-  defp imprimir_reporte_formateado(items) when is_list(items) do
+  # R2, R4, R8 y Rankings: Listas estructuradas
+  def imprimir_reporte_formateado(items) when is_list(items) do
     Enum.each(items, fn
       {id, nombre, kilos, rendimiento} ->
         IO.puts("Lote: [#{id}] #{nombre} | Kilos: #{redondear(kilos)} kg | Rendimiento: #{redondear(rendimiento)} kg/ha")
 
-      # AQUI ESTA EL CAMBIO PARA R4 Y RANKING
       {liq, posicion} when is_map(liq) ->
         bruto = Map.get(liq, :suma_pesajes, Map.get(liq, :bruto, 0.0))
         bonif = Map.get(liq, :bonificaciones, 0.0)
@@ -314,43 +313,18 @@ defmodule Util do
   end
 
   # R8 cuando devuelve String directo
-  defp imprimir_reporte_formateado(texto) when is_binary(texto) do
+  def imprimir_reporte_formateado(texto) when is_binary(texto) do
     IO.puts(texto)
   end
 
-  @doc """
-Genera un ranking dinmico de liquidaciones usando Keyword Lists para las opciones.
-Opciones soportadas:
-  - campo
-  - orden
-  - limite
-"""
-def ranking(liquidaciones, opciones \\ []) do
-  campo = Keyword.get(opciones, :campo, :neto)
-  orden = Keyword.get(opciones, :orden, :desc)
-  limite = Keyword.get(opciones, :limite, nil)
-
-  resultado =
-    liquidaciones
-    |> Enum.sort_by(fn liq -> Map.get(liq, campo, 0.0) end, orden)
-    |> Enum.with_index(1)
-
-  if is_integer(limite) and limite > 0 do
-    Enum.take(resultado, limite)
-  else
-    resultado
-  end
-end
-
-  defp imprimir_reporte_formateado(otro) do
+  def imprimir_reporte_formateado(otro) do
     IO.inspect(otro, pretty: true)
   end
 
-@doc """
+  @doc """
   Muestra el desprendible de pago de un recolector adaptado a la estructura de Liquidacion.
   """
   def mostrar_desprendible(liq) when is_map(liq) do
-    # Obtenemos los valores de forma segura con respaldo
     bruto = Map.get(liq, :suma_pesajes, Map.get(liq, :bruto, 0.0))
     descuento = Map.get(liq, :alimentacion, Map.get(liq, :descuento, 0.0))
     bonificacion = Map.get(liq, :bonificaciones, 0.0)
@@ -373,7 +347,6 @@ end
   end
 
   @doc """
-
   Solicita y captura los datos de un pesaje adicional desde la consola.
   Muestra el formato de solicitud exactamente como pide el Anexo.
   """
@@ -443,7 +416,7 @@ end
 
   @doc """
   Redondea un numero a 2 decimales de forma segura.
-  """
+  """ 
   def redondear(numero) when is_number(numero) do
     Float.round(numero * 1.0, 2)
   end
